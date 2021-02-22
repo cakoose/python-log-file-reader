@@ -1,0 +1,13 @@
+[tool.poetry]
+name = "log_file_reader"
+version = "0.0.1"
+description = ""
+authors = ["Kannan Goundan <kannan@cakoose.com>"]
+
+[tool.poetry.dependencies]
+python = "^3.6"
+
+[tool.poetry.dev-dependencies]
+pytest = "^6.2"
+pytest-cov = "^2.11.1"
+pyflakes = "^2.2.0"
