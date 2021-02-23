@@ -261,7 +261,7 @@ class TestReadRotated:
             r = run_read(None)
             print(r.next())
             assert False, "expecting exception"
-        except lfr.NeitherFileFound:
+        except lfr.NeitherFileFoundException:
             pass
 
     def test_initial_read_limit(self, tmp_path):

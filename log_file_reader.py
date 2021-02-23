@@ -54,6 +54,16 @@ def read(log_path, initial_read_limit, state):
         start.  We'll start from the next full line after that point.
     state: The first time, pass None.  For subsequent calls, pass in the State value
         returned by the previous call.
+
+    This returns a generator that:
+    1. yields all the new log lines.
+    2. returns (via StopIteration) the state value to use in subsequent calls.
+
+    May raise:
+    - FileNotFoundError
+    - CouldNotContinueException: Based on the state you passed in, we couldn't resume
+      reading lines where we left off.  Either the file inode is different, or the file
+      was truncated.
     """
     with open(log_path, 'rb') as f:
         return (yield from _read_f(f, os.fstat(f.fileno()), initial_read_limit, state))
@@ -103,7 +113,7 @@ def _read_from(f, f_stat, offset, at_line_start):
 
     return State(f_stat.st_ino, offset, True)
 
-class NeitherFileFound(Exception):
+class NeitherFileFoundException(Exception):
     """Neither log1_path or log2_path was available to read."""
     pass
 
@@ -131,11 +141,22 @@ def read_rotated(log1_path, log2_path, initial_read_limit, state):
         start.  We'll start from the next full line after that point.
     state: The first time, pass None.  For subsequent calls, pass in the State value
         returned by the previous call.
+
+    This returns a generator that:
+    1. yields all the new log lines.
+    2. returns (via StopIteration) the state value to use in subsequent calls.
+
+    May raise:
+    - NeitherFileFoundException: Neither of the log files exist.  Even during rotation,
+      at least one of them must always exist.
+    - CouldNotContinueException: Based on the state you passed in, we couldn't resume
+      reading lines where we left off.  Either the file inode is different, or the file
+      was truncated.
     """
     with _open_if_found(log1_path, 'rb') as f1:
         with _open_if_found(log2_path, 'rb') as f2:
             if f1 is None and f2 is None:
-                raise NeitherFileFound()
+                raise NeitherFileFoundException()
             return (yield from _read_rotated(f1, f2, initial_read_limit, state))
 
 def _read_rotated(f1, f2, initial_read_limit, state):
